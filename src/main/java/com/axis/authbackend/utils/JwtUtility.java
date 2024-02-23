@@ -3,7 +3,6 @@ package com.axis.authbackend.utils;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -11,50 +10,45 @@ import java.util.Date;
 
 @NoArgsConstructor
 public class JwtUtility {
-    @Value("${jwt.access.token.secret}")
-    private String accessTokenSecret;
+    private static final long ACCESS_TOKEN_EXPIRY = 3_600_000;
+    private static final String ACCESS_TOKEN_SECRET= "Ysn6JkhVuzMXBBxGPJq7n7OoP3Yz6SvKMP1Yog+Jg5Q=";
 
-    @Value("${jwt.access.token.expiry}")
-    private long accessTokenExpiry;
+    private static final long REFRESH_TOKEN_EXPIRY = 1_209_600_000;
+    private static final String REFRESH_TOKEN_SECRET="Ysn6JkhVuzMXBBxGPJq7n7OoP3Yz6SvKMP1Yog+Jg5Q=";
 
-    @Value("${jwt.refresh.token.secret}")
-    private String refreshTokenSecret;
+    private static final SecretKey accessKey = Keys.hmacShaKeyFor(ACCESS_TOKEN_SECRET.getBytes(StandardCharsets.UTF_8));
+    private static final SecretKey refreshKey = Keys.hmacShaKeyFor(REFRESH_TOKEN_SECRET.getBytes(StandardCharsets.UTF_8));
 
-    @Value("${jwt.refresh.token.expiry}")
-    private long refreshTokenExpiry;
 
-    private final SecretKey accessKey = Keys.hmacShaKeyFor(accessTokenSecret.getBytes(StandardCharsets.UTF_8));
-    private final SecretKey refreshKey = Keys.hmacShaKeyFor(refreshTokenSecret.getBytes(StandardCharsets.UTF_8));
-
-    public String generateAccessToken(String name, String email) {
+    public static String generateAccessToken(String name, String email) {
         return Jwts.builder()
                 .setSubject(name)
                 .setSubject(email)
-                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiry))
+                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRY))
                 .signWith(accessKey)
                 .compact();
     }
 
-    public String generateRefreshToken(Long id) {
+    public static String generateRefreshToken(Long id) {
         return Jwts.builder()
                 .setSubject(id.toString())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiry))
+                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRY))
                 .signWith(refreshKey)
                 .compact();
     }
 
-    public String extractUsernameFromRefreshToken(String token) {
+    public static String extractUsernameFromRefreshToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(refreshTokenSecret)
+                .setSigningKey(REFRESH_TOKEN_SECRET)
                 .build()
                 .parseClaimsJwt(token)
                 .getBody()
                 .getSubject();
     }
 
-    public String extractUsernameFromAccessToken(String token) {
+    public static String extractUsernameFromAccessToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(accessTokenSecret)
+                .setSigningKey(ACCESS_TOKEN_SECRET)
                 .build()
                 .parseClaimsJwt(token)
                 .getBody()

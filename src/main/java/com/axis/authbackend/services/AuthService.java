@@ -17,7 +17,10 @@ public class AuthService {
         if(existingUser == null) {
             authRepository.save(user);
             User savedUser = authRepository.findUserByEmail(user.getEmail());
+
             Long id = savedUser.getId();
+
+
 
             String refreshToken = JwtUtility.generateRefreshToken(id);
             savedUser.setRefreshToken(refreshToken);
