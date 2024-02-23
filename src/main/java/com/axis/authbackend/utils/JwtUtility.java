@@ -1,9 +1,9 @@
 package com.axis.authbackend.utils;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -11,45 +11,50 @@ import java.util.Date;
 
 @NoArgsConstructor
 public class JwtUtility {
-    private static final long ACCESS_TOKEN_EXPIRY = 3_600_000;
-    private static final String ACCESS_TOKEN_SECRET= "Ysn6JkhVuzMXBBxGPJq7n7OoP3Yz6SvKMP1Yog+Jg5Q=";
+    @Value("${jwt.access.token.secret}")
+    private String accessTokenSecret;
 
-    private static final long REFRESH_TOKEN_EXPIRY = 1_209_600_000;
-    private static final String REFRESH_TOKEN_SECRET="Ysn6JkhVuzMXBBxGPJq7n7OoP3Yz6SvKMP1Yog+Jg5Q=";
+    @Value("${jwt.access.token.expiry}")
+    private long accessTokenExpiry;
 
-    private static final SecretKey accessKey = Keys.hmacShaKeyFor(ACCESS_TOKEN_SECRET.getBytes(StandardCharsets.UTF_8));
-    private static final SecretKey refreshKey = Keys.hmacShaKeyFor(REFRESH_TOKEN_SECRET.getBytes(StandardCharsets.UTF_8));
+    @Value("${jwt.refresh.token.secret}")
+    private String refreshTokenSecret;
 
+    @Value("${jwt.refresh.token.expiry}")
+    private long refreshTokenExpiry;
 
-    public static String generateAccessToken(String name, String email) {
+    private final SecretKey accessKey = Keys.hmacShaKeyFor(accessTokenSecret.getBytes(StandardCharsets.UTF_8));
+    private final SecretKey refreshKey = Keys.hmacShaKeyFor(refreshTokenSecret.getBytes(StandardCharsets.UTF_8));
+
+    public String generateAccessToken(String name, String email) {
         return Jwts.builder()
                 .setSubject(name)
                 .setSubject(email)
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRY))
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiry))
                 .signWith(accessKey)
                 .compact();
     }
 
-    public static String generateRefreshToken(Long id) {
+    public String generateRefreshToken(Long id) {
         return Jwts.builder()
                 .setSubject(id.toString())
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRY))
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiry))
                 .signWith(refreshKey)
                 .compact();
     }
 
-    public static String extractUsernameFromRefreshToken(String token) {
+    public String extractUsernameFromRefreshToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(REFRESH_TOKEN_SECRET)
+                .setSigningKey(refreshTokenSecret)
                 .build()
                 .parseClaimsJwt(token)
                 .getBody()
                 .getSubject();
     }
 
-    public static String extractUsernameFromAccessToken(String token) {
+    public String extractUsernameFromAccessToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(ACCESS_TOKEN_SECRET)
+                .setSigningKey(accessTokenSecret)
                 .build()
                 .parseClaimsJwt(token)
                 .getBody()
