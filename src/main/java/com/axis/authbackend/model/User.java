@@ -29,11 +29,11 @@ public class User {
     @Column(name = "refresh_token")
     private String refreshToken;
 
-    @Column(name = "child_name")
-    private String childName;
-
-    @Column(name = "child_age")
-    private int childAge;
+//    @Column(name = "child_name")
+//    private String childName;
+//
+//    @Column(name = "child_age")
+//    private int childAge;
 
     public User(String name, String email) {
         this.name = name;
@@ -46,11 +46,11 @@ public class User {
         this.refreshToken = refreshToken;
     }
 
-    public User (String name, String email, String refreshToken, String childName, int childAge) {
-        this.name = name;
-        this.email = email;
-        this.refreshToken = refreshToken;
-        this.childName = childName;
-        this.childAge = childAge;
-    }
+//    public User (String name, String email, String refreshToken, String childName, int childAge) {
+//        this.name = name;
+//        this.email = email;
+//        this.refreshToken = refreshToken;
+//        this.childName = childName;
+//        this.childAge = childAge;
+//    }
 }

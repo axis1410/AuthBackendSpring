@@ -1,5 +1,7 @@
 package com.axis.authbackend.utils;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -11,7 +13,7 @@ import java.util.Date;
 
 @NoArgsConstructor
 public class JwtUtility {
-    private static final long ACCESS_TOKEN_EXPIRY = 3_600_000;
+    private static final long ACCESS_TOKEN_EXPIRY = 300_600_000;
     private static final String ACCESS_TOKEN_SECRET= "Ysn6JkhVuzMXBBxGPJq7n7OoP3Yz6SvKMP1Yog+Jg5Q=";
 
     private static final long REFRESH_TOKEN_EXPIRY = 1_209_600_000;
@@ -21,10 +23,10 @@ public class JwtUtility {
     private static final SecretKey refreshKey = Keys.hmacShaKeyFor(REFRESH_TOKEN_SECRET.getBytes(StandardCharsets.UTF_8));
 
 
-    public static String generateAccessToken(String name, String email) {
+    public static String generateAccessToken(String email) {
         return Jwts.builder()
-                .setSubject(name)
                 .setSubject(email)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRY))
                 .signWith(accessKey)
                 .compact();
@@ -38,21 +40,43 @@ public class JwtUtility {
                 .compact();
     }
 
-    public static String extractUsernameFromRefreshToken(String token) {
+    public static String extractIdFromRefreshToken(String token) {
+
+        JwtParser jwtParser = Jwts.parserBuilder()
+                .setSigningKey(refreshKey)
+                .build();
+
+        try {
+            return jwtParser.parse(token).toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid refresh token" + e.toString());
+        }
+    }
+
+    public static String extractEmailFromAccessToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(REFRESH_TOKEN_SECRET)
+                .setSigningKey(accessKey)
                 .build()
-                .parseClaimsJwt(token)
+                .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
     }
 
-    public static String extractUsernameFromAccessToken(String token) {
+
+    public static Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(ACCESS_TOKEN_SECRET)
+                .setSigningKey(accessKey)
                 .build()
-                .parseClaimsJwt(token)
-                .getBody()
-                .getSubject();
+                .parseClaimsJws(token)
+                .getBody();
     }
+
+    public static boolean isTokenExpired(String token) {
+        Claims claims = extractAllClaims(token);
+        Date expirationDate = claims != null ? claims.getExpiration() : null;
+        return expirationDate != null && expirationDate.before(new Date());
+    }
+
+
+
 }
